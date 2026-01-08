@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>大富豪 - 1対1対戦</title>
+    <meta name="description" content="トランプゲーム大富豪の1対1 AI対戦">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- 所持金・ランク表示（全画面共通） -->
+        <div id="moneyDisplay" class="money-display">
+            <span id="rankIcon" class="rank-icon">😭</span>
+            <span id="rankName" class="rank-name">大貧民</span>
+            <span class="money-separator">|</span>
+            <span id="moneyAmount" class="money-amount">💰 0</span>
+        </div>
+
+        <!-- タイトル画面 -->
+        <section id="titleScreen" class="screen">
+            <div class="title-content">
+                <div class="title-header">
+                    <h1 class="game-title">大富豪</h1>
+                    <button id="settingsBtn" class="settings-btn" title="設定">⚙️</button>
+                </div>
+                <p class="title-subtitle">1 vs 1 対戦</p>
+                <button id="startGameBtn" class="main-btn">
+                    <span class="btn-icon">🎴</span>
+                    ゲームスタート
+                </button>
+                <button id="testModeBtn" class="sub-btn test-mode-btn">
+                    <span class="btn-icon">🧪</span>
+                    ジョーカーテスト
+                </button>
+            </div>
+        </section>
+
+        <!-- ジョーカーテスト選択画面 -->
+        <section id="testSelectScreen" class="screen hidden">
+            <div class="test-select-content">
+                <h2>テストするジョーカーを選択</h2>
+                <div id="testJokerList" class="test-joker-list"></div>
+                <button id="testBackBtn" class="sub-btn">戻る</button>
+            </div>
+        </section>
+
+        <!-- マッチメイク画面 -->
+        <section id="matchmakeScreen" class="screen hidden">
+            <div class="matchmake-content">
+                <h2>対戦準備</h2>
+                <div class="matchmake-vs">
+                    <div class="match-player">
+                        <span class="player-avatar">👤</span>
+                        <span>あなた</span>
+                    </div>
+                    <span class="vs-text">VS</span>
+                    <div class="match-player">
+                        <span class="player-avatar">🤖</span>
+                        <span>AI</span>
+                    </div>
+                </div>
+                <!-- ライフ表示 -->
+                <div id="matchmakeLifeDisplay" class="matchmake-life-display"></div>
+                <div class="matchmake-info">
+                    <p id="jokerInfo">ジョーカー: なし</p>
+                </div>
+                <button id="battleBtn" class="main-btn">
+                    <span class="btn-icon">⚔️</span>
+                    対戦開始
+                </button>
+                <button id="backToTitleBtn" class="sub-btn">
+                    タイトルに戻る
+                </button>
+            </div>
+        </section>
+
+        <!-- プレイ画面 -->
+        <section id="playScreen" class="screen hidden">
+            <div class="game-container">
+                <!-- ヘッダー -->
+                <header class="game-header">
+                    <h1>大富豪</h1>
+                    <div class="status-bar">
+                        <span id="revolutionStatus" class="revolution-badge hidden">🔄 革命中</span>
+                        <span id="backStatus" class="back-badge hidden">↩️ バック</span>
+                        <span id="shibariStatus" class="shibari-badge hidden">🔗 縛り</span>
+                        <span id="turnIndicator" class="turn-indicator"></span>
+                    </div>
+                </header>
+
+                <!-- AI手札エリア -->
+                <section class="ai-area">
+                    <div class="player-label">
+                        <span class="player-icon">🤖</span>
+                        <span>AI</span>
+                        <span id="aiCardCount" class="card-count">5枚</span>
+                    </div>
+                    <div id="aiJokers" class="joker-area ai-joker-area"></div>
+                    <div id="aiHand" class="hand ai-hand"></div>
+                </section>
+
+                <!-- フィールド（場） -->
+                <section class="field-area">
+                    <div class="field-label">
+                        フィールド
+                        <span id="fieldStatusBadges" class="field-status-badges">
+                            <span id="fieldRevolutionBadge" class="status-badge revolution hidden">🔄革命</span>
+                            <span id="fieldShibariBadge" class="status-badge shibari hidden">🔗縛り</span>
+                        </span>
+                    </div>
+                    <div id="field" class="field">
+                        <div class="field-empty">カードなし</div>
+                    </div>
+                    <div id="gameMessage" class="game-message"></div>
+                </section>
+
+                <!-- 先攻決めエリア -->
+                <section id="firstPlayerSelection" class="first-player-area hidden">
+                    <h3>先攻を決めるカードを選んでください</h3>
+                    <div id="firstPlayerCards" class="first-player-cards"></div>
+                </section>
+
+                <!-- プレイヤー手札エリア -->
+                <section class="player-area">
+                    <div class="player-label">
+                        <span class="player-icon">👤</span>
+                        <span>あなた</span>
+                        <span id="playerCardCount" class="card-count">5枚</span>
+                        <span id="playLifeDisplay" class="play-life-display"></span>
+                        <span id="playerStatusBadges" class="player-status-badges">
+                            <span id="playerRevolutionBadge" class="status-badge revolution hidden">🔄革命</span>
+                            <span id="playerShibariBadge" class="status-badge shibari hidden">🔗縛り</span>
+                        </span>
+                    </div>
+                    <div id="playerHand" class="hand player-hand"></div>
+                    <div id="playerJokers" class="joker-area player-joker-area"></div>
+                    <div id="validationMessage" class="validation-message"></div>
+                </section>
+
+                <!-- 操作ボタン -->
+                <section class="action-area">
+                    <button id="passBtn" class="action-btn pass-btn" disabled>
+                        パス
+                    </button>
+                    <button id="playBtn" class="action-btn play-btn" disabled>
+                        <span class="btn-icon">🃏</span>
+                        出す
+                    </button>
+                </section>
+            </div>
+        </section>
+
+        <!-- リザルト画面 -->
+        <section id="resultScreen" class="screen hidden">
+            <div class="result-content">
+                <div id="resultIcon" class="result-icon"></div>
+                <h2 id="resultTitle"></h2>
+                <p id="resultMessage"></p>
+
+                <!-- ライフ表示 -->
+                <div id="resultLifeDisplay" class="result-life-display"></div>
+
+                <!-- 報酬表示 -->
+                <div id="rewardSection" class="reward-section">
+                    <h3>報酬</h3>
+                    <div id="rewardBreakdown" class="reward-breakdown"></div>
+                    <div id="rewardTotal" class="reward-total"></div>
+                </div>
+
+                <!-- 所持金表示 -->
+                <div class="result-money-display">
+                    <span class="result-money-label">所持金:</span>
+                    <span id="resultMoneyAmount" class="result-money-amount">0</span>
+                </div>
+
+                <!-- 役履歴 -->
+                <div class="hand-history">
+                    <h3>使用した役</h3>
+                    <ul id="handHistoryList"></ul>
+                </div>
+
+                <button id="nextBtn" class="main-btn">
+                    <span class="btn-icon">➡️</span>
+                    次へ
+                </button>
+            </div>
+        </section>
+
+        <!-- ショップ画面 -->
+        <section id="shopScreen" class="screen hidden">
+            <div class="shop-content">
+                <h2>ショップ</h2>
+                <p class="shop-subtitle">ジョーカーを購入してください</p>
+
+                <!-- 所持中のジョーカー -->
+                <div class="owned-jokers-section">
+                    <h3>所持中のジョーカー <span id="ownedJokerCount">(0/5)</span></h3>
+                    <div id="ownedJokers" class="owned-jokers"></div>
+                </div>
+
+                <!-- リロールボタン -->
+                <div class="reroll-section">
+                    <button id="rerollBtn" class="reroll-btn">
+                        <span class="btn-icon">🔄</span>
+                        リロール <span id="rerollCost">(3)</span>
+                    </button>
+                </div>
+
+                <!-- ライフ購入セクション -->
+                <div id="shopLifeSection" class="shop-life-section"></div>
+
+                <div id="shopLineup" class="shop-lineup"></div>
+
+                <div class="shop-selected">
+                    <h3>購入済み</h3>
+                    <div id="selectedJokers" class="selected-jokers">
+                        <span class="no-selection">なし</span>
+                    </div>
+                </div>
+
+                <button id="nextBattleBtn" class="main-btn">
+                    <span class="btn-icon">⚔️</span>
+                    NEXT BATTLE
+                </button>
+            </div>
+        </section>
+
+        <!-- ジョーカー選択モーダル -->
+        <div id="jokerActionModal" class="modal hidden">
+            <div class="modal-content joker-modal">
+                <h3 id="jokerModalTitle"></h3>
+                <p id="jokerModalMessage"></p>
+                <div id="jokerModalContent"></div>
+                <button id="jokerModalConfirm" class="action-btn play-btn">確定</button>
+            </div>
+        </div>
+
+        <!-- ボンバー数字選択モーダル -->
+        <div id="bomberModal" class="modal hidden">
+            <div class="modal-content bomber-modal">
+                <h3>ボンバー：数字を選択</h3>
+                <div id="bomberRankSelect" class="bomber-ranks"></div>
+            </div>
+        </div>
+
+        <!-- 設定モーダル -->
+        <div id="settingsModal" class="modal hidden">
+            <div class="modal-content settings-modal">
+                <h3>⚙️ 設定</h3>
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <label for="autoPassToggle">
+                            <span class="setting-label">オートパス</span>
+                            <span class="setting-desc">出せるカード・ジョーカーがない場合に自動でパス</span>
+                        </label>
+                        <input type="checkbox" id="autoPassToggle" class="toggle-switch">
+                    </div>
+                    <div class="setting-item">
+                        <button id="joker-settings-btn" class="settings-sub-btn">登場ジョーカー設定</button>
+                    </div>
+                    <div class="setting-item">
+                        <label for="lifeSystemToggle">
+                            <span class="setting-label">ライフ制</span>
+                            <span class="setting-desc">敗北でライフが減り、0でゲームオーバー</span>
+                        </label>
+                        <input type="checkbox" id="lifeSystemToggle" class="toggle-switch" checked>
+                    </div>
+                    <div class="setting-item">
+                        <button id="game-reset-btn" class="settings-sub-btn danger-btn">ゲームリセット</button>
+                    </div>
+                </div>
+                <button id="settingsCloseBtn" class="action-btn play-btn">閉じる</button>
+            </div>
+        </div>
+
+        <!-- 土下座発動確認モーダル -->
+        <div id="dogezaModal" class="modal hidden">
+            <div class="modal-content dogeza-modal">
+                <h3>🙇 土下座</h3>
+                <p>負けが確定しました...</p>
+                <p>土下座カードを使用して再戦しますか？</p>
+                <p class="dogeza-desc">山札から2枚ずつ配られ、再戦となります</p>
+                <div class="dogeza-buttons">
+                    <button id="dogezaYes" class="action-btn play-btn">はい（土下座する）</button>
+                    <button id="dogezaNo" class="action-btn pass-btn">いいえ（敗北を受け入れる）</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 土下座破棄通知モーダル -->
+        <div id="dogezaDiscardModal" class="modal hidden">
+            <div class="modal-content dogeza-discard-modal">
+                <h3>🎉 昇格おめでとうございます！</h3>
+                <div id="dogezaDiscardMessage" class="dogeza-discard-message"></div>
+                <button id="dogezaDiscardClose" class="action-btn play-btn">閉じる</button>
+            </div>
+        </div>
+
+        <!-- ジョーカー売却確認モーダル -->
+        <div id="sellJokerModal" class="modal hidden">
+            <div class="modal-content sell-joker-modal">
+                <h3>ジョーカー売却</h3>
+                <p id="sellJokerMessage"></p>
+                <div class="sell-buttons">
+                    <button id="sellJokerYes" class="action-btn pass-btn">はい（売却する）</button>
+                    <button id="sellJokerNo" class="action-btn play-btn">いいえ（戻る）</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 所持上限モーダル -->
+        <div id="limitModal" class="modal hidden">
+            <div class="modal-content limit-modal">
+                <h3>⚠️ 所持上限</h3>
+                <p>ジョーカーの所持上限（5枚）に達しています。</p>
+                <p>購入するには先にジョーカーを売却してください。</p>
+                <button id="limitModalClose" class="action-btn play-btn">閉じる</button>
+            </div>
+        </div>
+
+        <!-- 破壊ジョーカー選択モーダル -->
+        <div id="destroyModal" class="modal hidden">
+            <div class="modal-content destroy-modal">
+                <h3>💥 破壊ジョーカー</h3>
+                <p id="destroyMessage">破壊する相手のジョーカーを選択してください</p>
+                <div id="destroyTargets" class="destroy-targets"></div>
+                <button id="destroyConfirm" class="action-btn play-btn" disabled>破壊する</button>
+            </div>
+        </div>
+
+        <!-- 覗き見モーダル -->
+        <div id="peekModal" class="modal hidden">
+            <div class="modal-content peek-modal">
+                <h3>👁️ 覗き見</h3>
+                <p>相手の手札：</p>
+                <div id="peekCards" class="peek-cards"></div>
+                <p class="peek-timer">あと<span id="peekCountdown">3</span>秒...</p>
+            </div>
+        </div>
+
+        <!-- 汎用通知モーダル -->
+        <div id="notifyModal" class="modal hidden">
+            <div class="modal-content notify-modal">
+                <h3 id="notifyTitle"></h3>
+                <p id="notifyMessage"></p>
+                <button id="notifyClose" class="action-btn play-btn">OK</button>
+            </div>
+        </div>
+
+        <!-- ランク変動演出モーダル -->
+        <div id="rankChangeModal" class="modal hidden">
+            <div class="modal-content rank-change-modal">
+                <div id="rankChangeEffect" class="rank-change-effect"></div>
+                <div id="rankChangeIcon" class="rank-change-icon"></div>
+                <h2 id="rankChangeTitle"></h2>
+                <p id="rankChangeMessage"></p>
+                <div id="rankChangeBadges" class="rank-change-badges">
+                    <span id="rankChangePrev" class="rank-badge prev"></span>
+                    <span class="rank-arrow">→</span>
+                    <span id="rankChangeNext" class="rank-badge next"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 購入確認モーダル -->
+        <div id="purchaseConfirmModal" class="modal hidden">
+            <div class="modal-content purchase-confirm-modal">
+                <h3>購入確認</h3>
+                <div id="purchaseConfirmContent" class="purchase-confirm-content"></div>
+                <div class="purchase-confirm-buttons">
+                    <button id="purchaseConfirmYes" class="action-btn play-btn">はい（購入する）</button>
+                    <button id="purchaseConfirmNo" class="action-btn pass-btn">いいえ（戻る）</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ボーナストランプパック開封モーダル -->
+        <div id="bonusPackModal" class="modal hidden">
+            <div class="modal-content bonus-pack-modal">
+                <h3>🎁 ボーナストランプパック</h3>
+                <p>1枚選んで山札に追加してください</p>
+                <div id="bonusPackCards" class="bonus-pack-cards"></div>
+                <button id="bonusPackConfirm" class="action-btn play-btn" disabled>選択して追加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ジョーカー設定モーダル -->
+    <div id="joker-settings-modal" class="modal hidden">
+        <div class="modal-content joker-settings-content">
+            <h2 class="modal-title">登場ジョーカー設定</h2>
+            <p class="modal-desc">タップで有効/無効切り替え、ホバーで詳細確認</p>
+            <div id="joker-settings-list" class="joker-settings-list"></div>
+
+            <!-- 詳細ポップアップ -->
+            <div id="joker-detail-popup" class="joker-detail-popup hidden">
+                <div class="detail-name"></div>
+                <div class="detail-rarity"></div>
+                <div class="detail-desc"></div>
+                <div class="detail-category"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="close-joker-settings" class="btn-primary">完了</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ゲームオーバーモーダル -->
+    <div id="gameOverModal" class="modal hidden">
+        <div class="modal-content gameover-modal">
+            <h2 class="gameover-title">💠 GAME OVER 💠</h2>
+            <p class="gameover-subtitle">すべてを失った…</p>
+            <div id="gameOverStory" class="gameover-story"></div>
+            <button id="gameOverBackToTitle" class="action-btn play-btn">タイトルに戻る</button>
+        </div>
+    </div>
+
+    <script src="js/card.js"></script>
+    <script src="js/joker.js"></script>
+    <script src="js/system.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/shop.js"></script>
+    <script src="js/screens.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
